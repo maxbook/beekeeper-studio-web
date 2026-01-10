@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { AuthRequest } from '../types';
 import { authenticate, getSessionId } from '../middleware/auth';
 import { checkConnection } from '../state/sessionState';
+import { ConnectionHandlers } from '../handlers/connectionHandlers';
 
 const router = Router();
 
@@ -32,20 +33,15 @@ router.post('/execute', async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    // TODO: Import and call ConnHandlers['conn/executeQuery']
-    // const result = await ConnHandlers['conn/executeQuery']({
-    //   queryText: query,
-    //   options: options || {},
-    //   sId: sessionId
-    // });
+    // Call the handler
+    const result = await ConnectionHandlers.executeQuery({
+      query,
+      sId: sessionId
+    });
 
     res.json({
       success: true,
-      data: {
-        results: [], // Placeholder
-        fields: [],
-        affectedRows: 0
-      }
+      data: result
     });
   } catch (err: any) {
     console.error('Query execution error:', err);

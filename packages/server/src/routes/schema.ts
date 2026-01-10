@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { AuthRequest } from '../types';
 import { authenticate, getSessionId } from '../middleware/auth';
 import { checkConnection } from '../state/sessionState';
+import { ConnectionHandlers } from '../handlers/connectionHandlers';
 
 const router = Router();
 
@@ -19,16 +20,16 @@ router.get('/tables', async (req: AuthRequest, res: Response) => {
 
     const { schema } = req.query;
 
-    // TODO: Import and call ConnHandlers['conn/listTables']
-    // const tables = await ConnHandlers['conn/listTables']({
-    //   filter: { schema } as FilterOptions,
-    //   sId: sessionId
-    // });
+    // Call the handler
+    const tables = await ConnectionHandlers.listTables({
+      filter: { schema },
+      sId: sessionId
+    });
 
     res.json({
       success: true,
       data: {
-        tables: [] // Placeholder
+        tables
       }
     });
   } catch (err: any) {
@@ -145,16 +146,16 @@ router.get('/schemas', async (req: AuthRequest, res: Response) => {
     const sessionId = getSessionId(req);
     checkConnection(sessionId);
 
-    // TODO: Import and call ConnHandlers['conn/listSchemas']
-    // const schemas = await ConnHandlers['conn/listSchemas']({
-    //   filter: req.query.filter as any,
-    //   sId: sessionId
-    // });
+    // Call the handler
+    const schemas = await ConnectionHandlers.listSchemas({
+      filter: req.query.filter as any,
+      sId: sessionId
+    });
 
     res.json({
       success: true,
       data: {
-        schemas: [] // Placeholder
+        schemas
       }
     });
   } catch (err: any) {
@@ -186,17 +187,17 @@ router.get('/tables/:table/columns', async (req: AuthRequest, res: Response) => 
       return;
     }
 
-    // TODO: Import and call ConnHandlers['conn/listTableColumns']
-    // const columns = await ConnHandlers['conn/listTableColumns']({
-    //   table,
-    //   schema: schema as string,
-    //   sId: sessionId
-    // });
+    // Call the handler
+    const columns = await ConnectionHandlers.listTableColumns({
+      table,
+      schema: schema as string,
+      sId: sessionId
+    });
 
     res.json({
       success: true,
       data: {
-        columns: [] // Placeholder
+        columns
       }
     });
   } catch (err: any) {
@@ -447,26 +448,19 @@ router.get('/tables/:table/data', async (req: AuthRequest, res: Response) => {
     // Parse parameters
     const offsetNum = parseInt(offset as string, 10);
     const limitNum = parseInt(limit as string, 10);
-    const orderByArray = orderBy ? JSON.parse(orderBy as string) : [];
-    const filtersArray = filters ? JSON.parse(filters as string) : [];
 
-    // TODO: Import and call ConnHandlers['conn/selectTop']
-    // const result = await ConnHandlers['conn/selectTop']({
-    //   table,
-    //   offset: offsetNum,
-    //   limit: limitNum,
-    //   orderBy: orderByArray,
-    //   filters: filtersArray,
-    //   schema: schema as string,
-    //   sId: sessionId
-    // });
+    // Call the handler
+    const result = await ConnectionHandlers.selectTop({
+      table,
+      offset: offsetNum,
+      limit: limitNum,
+      schema: schema as string,
+      sId: sessionId
+    });
 
     res.json({
       success: true,
-      data: {
-        rows: [],
-        totalRows: 0
-      } // Placeholder
+      data: result
     });
   } catch (err: any) {
     console.error('Get table data error:', err);

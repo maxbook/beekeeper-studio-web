@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { AuthRequest } from '../types';
 import { authenticate, getSessionId } from '../middleware/auth';
 import { getSession, createSession, checkConnection } from '../state/sessionState';
+import { ConnectionHandlers } from '../handlers/connectionHandlers';
 
 const router = Router();
 
@@ -37,14 +38,13 @@ router.post('/create', async (req: AuthRequest, res: Response) => {
       session = createSession(sessionId, req.user!.id);
     }
 
-    // TODO: Import and call ConnHandlers['conn/create']
-    // For now, this is a placeholder
-    // const result = await ConnHandlers['conn/create']({
-    //   config,
-    //   auth,
-    //   osUser: osUser || req.user!.username,
-    //   sId: sessionId
-    // });
+    // Call the handler
+    await ConnectionHandlers.create({
+      config,
+      auth,
+      osUser: osUser || req.user!.username,
+      sId: sessionId
+    });
 
     res.json({
       success: true,
@@ -80,12 +80,12 @@ router.post('/test', async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    // TODO: Import and call ConnHandlers['conn/test']
-    // const result = await ConnHandlers['conn/test']({
-    //   config,
-    //   osUser: osUser || req.user!.username,
-    //   sId: sessionId
-    // });
+    // Call the handler
+    await ConnectionHandlers.test({
+      config,
+      osUser: osUser || req.user!.username,
+      sId: sessionId
+    });
 
     res.json({
       success: true,
@@ -194,13 +194,11 @@ router.get('/databases', async (req: AuthRequest, res: Response) => {
     const sessionId = getSessionId(req);
     checkConnection(sessionId);
 
-    // TODO: Import and call ConnHandlers['conn/listDatabases']
-    // const databases = await ConnHandlers['conn/listDatabases']({
-    //   filter: req.query.filter as any,
-    //   sId: sessionId
-    // });
-
-    const databases: string[] = []; // Placeholder
+    // Call the handler
+    const databases = await ConnectionHandlers.listDatabases({
+      filter: req.query.filter as any,
+      sId: sessionId
+    });
 
     res.json({
       success: true,
@@ -249,12 +247,12 @@ router.get('/version', async (req: AuthRequest, res: Response) => {
     const sessionId = getSessionId(req);
     checkConnection(sessionId);
 
-    // TODO: Import and call ConnHandlers['conn/versionString']
-    // const version = await ConnHandlers['conn/versionString']({ sId: sessionId });
+    // Call the handler
+    const version = await ConnectionHandlers.versionString({ sId: sessionId });
 
     res.json({
       success: true,
-      data: { version: '' } // Placeholder
+      data: { version }
     });
   } catch (err: any) {
     console.error('Version error:', err);
