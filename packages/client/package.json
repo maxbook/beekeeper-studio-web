@@ -21,7 +21,8 @@
     "vuex": "^3.6.2",
     "vue-router": "^3.6.5",
     "axios": "^1.6.0",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@vitejs/plugin-vue2": "^2.3.0",
