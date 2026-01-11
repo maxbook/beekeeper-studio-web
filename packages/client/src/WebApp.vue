@@ -13,7 +13,32 @@
         <div class="app-title">
           🐝 <strong>Beekeeper Studio</strong> Web
         </div>
+
+        <!-- Navigation (if connected) -->
+        <div v-if="isConnected" class="nav-tabs">
+          <button
+            class="nav-tab"
+            :class="{ active: currentView === 'explorer' }"
+            @click="currentView = 'explorer'"
+          >
+            <span class="material-icons">table_chart</span>
+            Explorer
+          </button>
+          <button
+            class="nav-tab"
+            :class="{ active: currentView === 'query' }"
+            @click="currentView = 'query'"
+          >
+            <span class="material-icons">code</span>
+            Query
+          </button>
+        </div>
+
         <div class="user-info">
+          <span class="connection-status" v-if="isConnected">
+            <span class="status-dot connected"></span>
+            {{ connectionInfo }}
+          </span>
           <span class="username">{{ currentUser?.username }}</span>
           <button class="btn-logout" @click="handleLogout">
             Logout
@@ -21,33 +46,20 @@
         </div>
       </div>
 
-      <!-- Main Beekeeper Studio Interface -->
-      <!-- This will be the original App.vue content, adapted -->
+      <!-- Main Content Area -->
       <div class="beekeeper-main">
-        <slot name="main-content">
-          <!--
-            TODO: Load the actual Beekeeper Studio interface here
-            For now, show a placeholder
-          -->
-          <div class="placeholder-content">
-            <h2>🎉 Welcome to Beekeeper Studio Web!</h2>
-            <p>You are now authenticated and connected to the API server.</p>
+        <!-- Connection View (not connected) -->
+        <DatabaseConnection
+          v-if="!isConnected"
+          @connected="handleConnected"
+          @navigate-to-explorer="currentView = 'explorer'"
+        />
 
-            <div class="next-steps">
-              <h3>Next Steps:</h3>
-              <ol>
-                <li>Connect to a database using the connection interface</li>
-                <li>Browse tables and schema</li>
-                <li>Execute SQL queries</li>
-              </ol>
-            </div>
+        <!-- Explorer View (connected) -->
+        <DatabaseExplorer v-else-if="currentView === 'explorer'" />
 
-            <div class="api-info">
-              <h4>API Connection:</h4>
-              <pre>{{ apiStatus }}</pre>
-            </div>
-          </div>
-        </slot>
+        <!-- Query Editor View (connected) -->
+        <QueryEditor v-else-if="currentView === 'query'" />
       </div>
     </div>
 
@@ -65,23 +77,40 @@
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 import AuthPage from './components/Auth/AuthPage.vue';
+import DatabaseConnection from './components/Database/DatabaseConnection.vue';
+import DatabaseExplorer from './components/Database/DatabaseExplorer.vue';
+import QueryEditor from './components/Database/QueryEditor.vue';
 
 export default Vue.extend({
   name: 'WebApp',
 
   components: {
-    AuthPage
+    AuthPage,
+    DatabaseConnection,
+    DatabaseExplorer,
+    QueryEditor
   },
 
   data() {
     return {
       isInitializing: true,
-      apiStatus: 'Connected'
+      currentView: 'connection' as 'connection' | 'explorer' | 'query',
+      isConnected: false,
+      connectionConfig: null as any
     };
   },
 
   computed: {
-    ...mapGetters('auth', ['isAuthenticated', 'currentUser'])
+    ...mapGetters('auth', ['isAuthenticated', 'currentUser']),
+
+    connectionInfo(): string {
+      if (!this.connectionConfig) return '';
+      const { connectionType, host, port, defaultDatabase } = this.connectionConfig;
+      if (connectionType === 'sqlite') {
+        return `SQLite: ${defaultDatabase}`;
+      }
+      return `${connectionType}: ${host}:${port}/${defaultDatabase}`;
+    }
   },
 
   async mounted() {
@@ -103,12 +132,29 @@ export default Vue.extend({
   methods: {
     handleAuthenticated() {
       console.log('User authenticated successfully');
-      // The store already has the user/token, just trigger a re-render
       this.$forceUpdate();
+    },
+
+    handleConnected(config: any) {
+      console.log('Database connected:', config);
+      this.isConnected = true;
+      this.connectionConfig = config;
+      this.currentView = 'explorer';
     },
 
     async handleLogout() {
       if (confirm('Are you sure you want to logout?')) {
+        // Disconnect from database if connected
+        if (this.isConnected) {
+          try {
+            await this.$api.send('conn/disconnect', {});
+          } catch (err) {
+            console.error('Disconnect error:', err);
+          }
+          this.isConnected = false;
+          this.connectionConfig = null;
+        }
+
         await this.$store.dispatch('auth/logout');
       }
     }
@@ -140,9 +186,47 @@ export default Vue.extend({
   color: white;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   z-index: 1000;
+  gap: 20px;
 }
 
 .app-title {
+  font-size: 18px;
+  white-space: nowrap;
+}
+
+.nav-tabs {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  justify-content: center;
+}
+
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.nav-tab:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.nav-tab.active {
+  background: white;
+  color: #667eea;
+  border-color: white;
+}
+
+.nav-tab .material-icons {
   font-size: 18px;
 }
 
@@ -150,6 +234,39 @@ export default Vue.extend({
   display: flex;
   align-items: center;
   gap: 12px;
+  white-space: nowrap;
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ccc;
+}
+
+.status-dot.connected {
+  background: #4caf50;
+  box-shadow: 0 0 8px #4caf50;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }
 
 .username {
@@ -174,66 +291,8 @@ export default Vue.extend({
 
 .beekeeper-main {
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
   background: #f5f5f5;
-}
-
-.placeholder-content {
-  max-width: 800px;
-  margin: 60px auto;
-  padding: 40px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.placeholder-content h2 {
-  margin-top: 0;
-  color: #333;
-}
-
-.next-steps {
-  margin: 30px 0;
-  padding: 20px;
-  background: #f9f9f9;
-  border-radius: 8px;
-  border-left: 4px solid #667eea;
-}
-
-.next-steps h3 {
-  margin-top: 0;
-  color: #667eea;
-}
-
-.next-steps ol {
-  margin: 10px 0 0 20px;
-  padding: 0;
-}
-
-.next-steps li {
-  margin: 8px 0;
-  color: #666;
-}
-
-.api-info {
-  margin-top: 30px;
-  padding: 20px;
-  background: #f0f0f0;
-  border-radius: 8px;
-}
-
-.api-info h4 {
-  margin-top: 0;
-  color: #333;
-}
-
-.api-info pre {
-  background: #333;
-  color: #0f0;
-  padding: 12px;
-  border-radius: 4px;
-  font-family: 'Courier New', monospace;
-  font-size: 13px;
 }
 
 .loading-overlay {
@@ -272,4 +331,7 @@ export default Vue.extend({
   color: #666;
   font-size: 16px;
 }
+
+/* Import Material Icons */
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
 </style>
