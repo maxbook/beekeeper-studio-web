@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="icon" href="<%= BASE_URL %>favicon.ico">
+    <title>Beekeeper Studio Web</title>
+    <meta name="description" content="Modern SQL editor and database manager">
+
+    <!-- Preconnect to API server -->
+    <link rel="preconnect" href="http://localhost:3000">
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      #app {
+        width: 100%;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      /* Loading screen */
+      .initial-loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .initial-loading h1 {
+        font-size: 32px;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>
+      <strong>We're sorry but Beekeeper Studio Web doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+    </noscript>
+
+    <div id="app">
+      <!-- Initial loading screen while Vue loads -->
+      <div class="initial-loading">
+        <h1>🐝 Beekeeper Studio</h1>
+      </div>
+    </div>
+
+    <!-- built files will be auto injected -->
+  </body>
+</html>

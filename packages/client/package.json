@@ -1,0 +1,35 @@
+{
+  "name": "@beekeeper-studio-web/client",
+  "version": "1.0.0",
+  "description": "Beekeeper Studio Web Client - Vue.js application",
+  "main": "src/main.ts",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext .ts,.vue"
+  },
+  "keywords": [
+    "database",
+    "sql",
+    "vue"
+  ],
+  "author": "Beekeeper Studio",
+  "license": "GPLv3",
+  "dependencies": {
+    "vue": "^2.7.14",
+    "vuex": "^3.6.2",
+    "vue-router": "^3.6.5",
+    "axios": "^1.6.0",
+    "lodash": "^4.17.21",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue2": "^2.3.0",
+    "@types/node": "^20.9.0",
+    "@types/lodash": "^4.14.200",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.0",
+    "sass": "^1.69.5"
+  }
+}
